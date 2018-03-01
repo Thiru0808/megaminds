@@ -1,0 +1,166 @@
+package ;
+
+import java.io.CharArrayWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.log4j.Logger;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+public class XMLReaderUtil extends DefaultHandler {
+	private static final Logger LOGGER = Logger.getLogger(XMLParser.class);
+//	private static final Log4Debug LOGGER = Log4DebugFactory.getLog4Debug(XMLReaderUtil.class);
+	private CharArrayWriter contents = new CharArrayWriter();
+	private Stack<String> tagStack = new Stack<>();
+	private String currentElement = null;
+	private Map<String, List<XMLWrapper>> subMap = new ConcurrentHashMap<>();
+	private Map<String, XMLWrapper> rootMap = new HashMap<>();
+	private XMLWrapper xmlWrapper;
+	private static final String ROOT = "root";
+
+	public XMLReaderUtil() {
+		LOGGER.debug("<<Initilized XMLReaderUtil>>");
+	}
+
+	@Override
+	public void startDocument() throws SAXException {
+		LOGGER.debug("<<XMLReaderUtil - Started to read XML>>");
+	}
+
+	@Override
+	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+		contents.reset();
+		tagStack.push(localName);
+		currentElement = localName;
+	}
+
+	@Override
+	public void endElement(String uri, String localName, String qName) throws SAXException {
+		if (currentElement.equals(localName)) {
+			String currentPopElement = tagStack.pop();
+			String currentPeekElement = tagStack.isEmpty() ? currentPopElement : tagStack.peek();
+			int peekRoot = tagStack.indexOf(currentPeekElement);
+			int peekRootIndex = (peekRoot > 1) ? (peekRoot - 1) : 0;
+			String peekRootElement = tagStack.isEmpty() ? ROOT : tagStack.get(peekRootIndex);
+			XMLWrapper wrapper = new XMLWrapper();
+			wrapper.setValue(contents.toString().trim().isEmpty() ? "-" : contents.toString().trim());
+			wrapper.setNode(currentPopElement);
+			wrapper.setParent(peekRootElement);
+			storeSubElement(currentPeekElement, wrapper);
+
+		} else {
+			if (tagStack.peek().equals(localName)) {
+				String currentPopElement = tagStack.pop();
+				String rootElement = tagStack.isEmpty() ? ROOT : tagStack.peek();
+				XMLWrapper wrapper = new XMLWrapper();
+				wrapper.setNode(currentPopElement);
+				wrapper.setParent(rootElement);
+				storeRootElement(wrapper);
+
+			}
+		}
+	}
+
+	@Override
+	public void characters(char[] ch, int start, int length) throws SAXException {
+		contents.write(ch, start, length);
+	}
+
+	@Override
+	public void endDocument() throws SAXException {
+		LOGGER.debug("<<XMLReaderUtil - Completed reading XML>>");
+		wrapRootXML();
+	}
+
+	private void storeSubElement(String currentPeekElement, XMLWrapper wrapper) {
+		if (subMap.containsKey(currentPeekElement)) {
+			subMap.get(currentPeekElement).add(wrapper);
+		} else {
+			List<XMLWrapper> wrap = new ArrayList<>();
+			wrap.add(wrapper);
+			subMap.put(currentPeekElement, wrap);
+		}
+	}
+
+	private void storeRootElement(XMLWrapper wrapper) {
+		if (subMap.containsKey(wrapper.getParent())) {
+			List<XMLWrapper> wrapperList = subMap.get(wrapper.getNode());
+			wrapper.setChildList(wrapperList);
+			wrapper.setContainsInnerChild(true);
+			subMap.get(wrapper.getParent()).add(wrapper);
+			subMap.remove(wrapper.getNode());
+		} else {
+			if (wrapper.getParent().equals(ROOT)) {
+				if (subMap.containsKey(wrapper.getNode())) {
+					List<XMLWrapper> wrapperRootList = subMap.get(wrapper.getNode());
+					wrapper.setChildList(wrapperRootList);
+					wrapper.setContainsInnerChild(true);
+					rootMap.put(wrapper.getParent(), wrapper);
+					subMap.remove(wrapper.getNode());
+				}
+			} else {
+				if (subMap.containsKey(wrapper.getNode())) {
+					List<XMLWrapper> wrapperInnerList = subMap.get(wrapper.getNode());
+					wrapper.setChildList(wrapperInnerList);
+					wrapper.setContainsInnerChild(true);
+					List<XMLWrapper> freshList = new ArrayList<>();
+					freshList.add(wrapper);
+					subMap.put(wrapper.getParent(), freshList);
+					subMap.remove(wrapper.getNode());
+				}
+			}
+		}
+
+	}
+	
+	public void wrapRootXML()
+	{
+		XMLWrapper wrapper = getXMLWrapper();
+		String parent = wrapper.getParent();
+		if(parent.equals("root"))
+		{
+			StringBuilder sb = new StringBuilder();
+			String heading = wrapper.getNode();
+			sb.append("<HEADIND : ").append(heading).append(">\n");
+			if(wrapper.isContainsInnerChild())
+			{
+				recur(wrapper.getChildList(),sb);
+			}else{
+				sb.append("<NODE : ").append(wrapper.getNode()).append(">\n");
+				sb.append("<VALUE : ").append(wrapper.getValue()).append(">\n");
+			}
+			LOGGER.debug("<<XMLReaderUtil - RootXMLWrapped>> \n" + sb.toString());
+		}
+	}
+	
+	private void recur(List<XMLWrapper> childList, StringBuilder sb)
+	{
+		
+			for(XMLWrapper wrap:childList)
+			{
+				if(wrap.isContainsInnerChild())
+				{
+					String subHeading = wrap.getNode();
+					sb.append("<SUB-HEADIND : ").append(subHeading).append(">\n");
+					recur(wrap.getChildList(),sb);
+				}else{
+					
+					sb.append("<NODE : ").append(wrap.getNode()).append(">\n");
+					sb.append("<VALUE : ").append(wrap.getValue()).append(">\n");
+				}
+				
+			}
+	}
+
+	public XMLWrapper getXMLWrapper() {
+		this.xmlWrapper = rootMap.get("root");
+		return xmlWrapper;
+	}
+
+}
