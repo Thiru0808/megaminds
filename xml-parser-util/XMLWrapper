@@ -1,0 +1,73 @@
+package ;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class XMLWrapper {
+
+	private String parent;
+	private String node;
+	private String value;
+	private List<XMLWrapper> childList = new ArrayList<>();
+	private Map<String, Object> childMap = new HashMap<>();
+	private boolean containsInnerChild=false;
+	
+	public String getParent() {
+		return parent;
+	}
+	public void setParent(String parent) {
+		this.parent = parent;
+	}
+	public String getNode() {
+		return node;
+	}
+	public void setNode(String node) {
+		this.node = node;
+	}
+	public String getValue() {
+		return value;
+	}
+	public void setValue(String value) {
+		this.value = value;
+	}
+	public List<XMLWrapper> getChildList() {
+		return childList;
+	}
+	public void setChildList(List<XMLWrapper> childList) {
+		this.childList = childList;
+	}
+	public Map<String, Object> getChildMap() {
+		return childMap;
+	}
+	public void setChildMap(Map<String, Object> childMap) {
+		this.childMap = childMap;
+	}
+	public boolean isContainsInnerChild() {
+		return containsInnerChild;
+	}
+	public void setContainsInnerChild(boolean containsInnerChild) {
+		this.containsInnerChild = containsInnerChild;
+	}
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("XMLWrapper [parent=");
+		builder.append(parent);
+		builder.append(", node=");
+		builder.append(node);
+		builder.append(", value=");
+		builder.append(value);
+		builder.append(", childList=");
+		builder.append(childList);
+		builder.append(", childMap=");
+		builder.append(childMap);
+		builder.append(", containsInnerChild=");
+		builder.append(containsInnerChild);
+		builder.append("]");
+		return builder.toString();
+	}
+	
+	
+}
