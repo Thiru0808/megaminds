@@ -1,0 +1,80 @@
+package ;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.sql.SQLException;
+
+import org.apache.log4j.Logger;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
+
+import oracle.sql.CLOB;
+
+@SuppressWarnings("deprecation")
+public class XMLParser {
+
+	private static final Logger LOGGER = Logger.getLogger(XMLParser.class);
+//	private static final Log4Debug LOGGER = Log4DebugFactory.getLog4Debug(XMLParser.class);
+	public static XMLWrapper parseXML(CLOB clobObj) {
+		LOGGER.debug("<<In XMLParser - parseXML(CLOB)>>");
+		try {
+			Reader r = clobObj.getCharacterStream();
+			InputSource is = new InputSource(r);
+			XMLReader xr = XMLReaderFactory.createXMLReader();
+			XMLReaderUtil xmlReaderUtil = new XMLReaderUtil();
+			xr.setContentHandler(xmlReaderUtil);
+			xr.parse(is);
+			return xmlReaderUtil.getXMLWrapper();
+		} catch (SQLException e) {
+			LOGGER.debug("SQLException - "+e.getMessage());
+		} catch (IOException e) {
+			LOGGER.debug("IOException - "+e.getMessage());
+		} catch (SAXException e) {
+			LOGGER.debug("SAXException - "+e.getMessage());
+		} catch (RuntimeException e) {
+			LOGGER.debug("RuntimeException - "+e.getMessage());
+		}
+		return null;
+	}
+	
+	public static XMLWrapper parseXML(String filePath) {
+		LOGGER.debug("<<In XMLParser - parseXML(FILEPATH)>> "+filePath);
+		try {
+			if(filePath==null||filePath.isEmpty())
+			{
+				throw new RuntimeException("Filepath is invalid, provide valid file path.");
+			}
+			XMLReader xr = XMLReaderFactory.createXMLReader();
+			XMLReaderUtil xmlReaderUtil = new XMLReaderUtil();
+			xr.setContentHandler(xmlReaderUtil);
+			xr.parse(new InputSource(new FileReader(filePath)));
+			return xmlReaderUtil.getXMLWrapper();
+		}catch (IOException e) {
+			LOGGER.debug("IOException - "+e.getMessage());
+		} catch (SAXException e) {
+			LOGGER.debug("SAXException - "+e.getMessage());
+		} catch (RuntimeException e) {
+			LOGGER.debug("RuntimeException - "+e.getMessage());
+		}
+		return null;
+	}
+	
+	public static void main(String[] args) {
+		try {
+			XMLReader xr = XMLReaderFactory.createXMLReader();
+			XMLReaderUtil xmlReaderUtil = new XMLReaderUtil();
+			xr.setContentHandler(xmlReaderUtil);
+			xr.parse(new InputSource(new FileReader(<<path>>)));
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		}
+
+	}
+	
+}
