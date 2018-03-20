@@ -1,25 +1,24 @@
 package ;
 
+import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.sql.Clob;
 import java.sql.SQLException;
+import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import oracle.sql.CLOB;
-
-@SuppressWarnings("deprecation")
 public class XMLParser {
 
 	private static final Logger LOGGER = Logger.getLogger(XMLParser.class);
-//	private static final Log4Debug LOGGER = Log4DebugFactory.getLog4Debug(XMLParser.class);
-	public static XMLWrapper parseXML(CLOB clobObj) {
+	public static XMLWrapper parseXML(Clob clobObj) {
 		LOGGER.debug("<<In XMLParser - parseXML(CLOB)>>");
+		XMLWrapper parsedXML = new XMLWrapper();
 		try {
 			Reader r = clobObj.getCharacterStream();
 			InputSource is = new InputSource(r);
@@ -27,17 +26,95 @@ public class XMLParser {
 			XMLReaderUtil xmlReaderUtil = new XMLReaderUtil();
 			xr.setContentHandler(xmlReaderUtil);
 			xr.parse(is);
-			return xmlReaderUtil.getXMLWrapper();
+			parsedXML = xmlReaderUtil.getXMLWrapper();
+			return parsedXML;
 		} catch (SQLException e) {
 			LOGGER.debug("SQLException - "+e.getMessage());
 		} catch (IOException e) {
 			LOGGER.debug("IOException - "+e.getMessage());
 		} catch (SAXException e) {
 			LOGGER.debug("SAXException - "+e.getMessage());
+			parsedXML.setSaxExceptionOccured(true);
+			parsedXML.setOriginalData(Clob2String(clobObj));
 		} catch (RuntimeException e) {
 			LOGGER.debug("RuntimeException - "+e.getMessage());
 		}
-		return null;
+		return parsedXML;
+	}
+	
+	public static XMLWrapper parseXML_ROOT(Clob clobObj) {
+		LOGGER.debug("<<In XMLParser - parseXML(CLOB)>>");
+		XMLWrapper parsedXML = new XMLWrapper();
+		try {
+			
+			Clob updatedClob = appendClob(clobObj, "params");
+			Reader r = updatedClob.getCharacterStream();
+			InputSource is = new InputSource(r);
+			XMLReader xr = XMLReaderFactory.createXMLReader();
+			XMLReaderUtil xmlReaderUtil = new XMLReaderUtil();
+			xr.setContentHandler(xmlReaderUtil);
+			xr.parse(is);
+			parsedXML = xmlReaderUtil.getXMLWrapper();
+			return parsedXML;
+		} catch (SQLException e) {
+			LOGGER.debug("SQLException - "+e.getMessage());
+		} catch (IOException e) {
+			LOGGER.debug("IOException - "+e.getMessage());
+		} catch (SAXException e) {
+			LOGGER.debug("SAXException - "+e.getMessage());
+			parsedXML.setSaxExceptionOccured(true);
+			parsedXML.setOriginalData(Clob2String(clobObj));
+		} catch (RuntimeException e) {
+			LOGGER.debug("RuntimeException - "+e.getMessage());
+		}
+		return parsedXML;
+	}
+	
+	public static Clob  appendClob(Clob data, String rootTab) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("<"+rootTab+">");
+		sb.append(Clob2String(data));
+		sb.append("</"+rootTab+">");
+		Clob updatedClob = String2Clob(sb);
+		if(updatedClob==null)
+		{
+			return data;
+		}
+		return updatedClob;
+	}
+	
+	public static StringBuilder  Clob2String(Clob data) {
+		final StringBuilder sb = new StringBuilder();
+		try {
+			final Reader reader = data.getCharacterStream();
+			final BufferedReader br = new BufferedReader(reader);
+			int b;
+			while (-1 != (b = br.read())) {
+				sb.append((char) b);
+			}
+			br.close();
+		} catch (SQLException e) {
+			LOGGER.debug("SQLException - "+e.getMessage());
+//			sb.append("SQLException - "+e.getMessage());
+		} catch (IOException e) {
+			LOGGER.debug("IOException - "+e.getMessage());
+//			sb.append("IOException - "+e.getMessage());
+		}
+		
+		return sb;
+	}
+	
+	public static Clob  String2Clob(StringBuilder data) {
+		Clob updatedClob = null;
+		try {
+			updatedClob = new javax.sql.rowset.serial.SerialClob(data.toString().toCharArray());
+			
+			LOGGER.debug("Updated the sb to clob");
+			
+		} catch (SQLException e) {
+			LOGGER.debug("SQLException - "+e.getMessage());
+		}
+		return updatedClob;
 	}
 	
 	public static XMLWrapper parseXML(String filePath) {
@@ -60,6 +137,54 @@ public class XMLParser {
 			LOGGER.debug("RuntimeException - "+e.getMessage());
 		}
 		return null;
+	}
+	
+	public static StringBuilder wrapRootXML(XMLWrapper wrapper)
+	{
+		String parent = wrapper.getParent();
+		StringBuilder sb = new StringBuilder();
+		if(parent.equals("root"))
+		{
+			String heading = wrapper.getNode();
+			sb.append("<table style=\"width: 100%\">").append("\n");
+			sb.append("<tr>").append("\n");
+			sb.append("<td class=\"VertDxBassa\" colspan=\"2\">").append(heading).append("</td>").append("\n");
+			sb.append("</tr>").append("\n");
+			sb.append("<tr>").append("\n");
+			sb.append("<td class=\"VertSxBassa\" width=\"30%\">").append("Attribute").append("</td>").append("\n");
+			sb.append("<td class=\"VertSxBassa\" width=\"70%\">").append("Value").append("</td>").append("\n");
+			sb.append("</tr>").append("\n");
+			if(wrapper.isContainsInnerChild())
+			{
+				recur(wrapper.getChildList(),sb);
+			}
+			sb.append("</table>").append("\n");
+		}
+		return sb;
+	}
+	
+	private static void recur(List<XMLWrapper> childList, StringBuilder sb)
+	{
+			for(XMLWrapper wrap:childList)
+			{
+				if(wrap.isContainsInnerChild())
+				{
+					String subHeading = wrap.getNode();
+					sb.append("<tr>").append("\n");
+					sb.append("<td class=\"VertDxBassa\" colspan=\"2\">").append(subHeading).append("</td>").append("\n");
+					sb.append("</tr>").append("\n");
+					sb.append("<tr>").append("\n");
+					sb.append("<td class=\"VertSxBassa\" width=\"30%\">").append("Attribute").append("</td>").append("\n");
+					sb.append("<td class=\"VertSxBassa\" width=\"70%\">").append("Value").append("</td>").append("\n");
+					sb.append("</tr>").append("\n");
+					recur(wrap.getChildList(),sb);
+				}else{
+					sb.append("<tr>").append("\n");
+					sb.append("<td class=\"VertDxBassa\" width=\"30%\">").append(wrap.getNode()).append("</td>").append("\n");
+					sb.append("<td class=\"VertDxBassa\" width=\"70%\">").append(wrap.getValue()).append("</td>").append("\n");
+					sb.append("</tr>").append("\n");
+				}
+			}
 	}
 	
 	public static void main(String[] args) {
