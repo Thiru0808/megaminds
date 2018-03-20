@@ -1,11 +1,17 @@
 package ;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class XMLWrapper {
+public class XMLWrapper implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 386974197403632249L;
 
 	private String parent;
 	private String node;
@@ -13,6 +19,8 @@ public class XMLWrapper {
 	private List<XMLWrapper> childList = new ArrayList<>();
 	private Map<String, Object> childMap = new HashMap<>();
 	private boolean containsInnerChild=false;
+	private StringBuilder originalData = new StringBuilder();
+	private boolean saxExceptionOccured = false;
 	
 	public String getParent() {
 		return parent;
@@ -49,6 +57,18 @@ public class XMLWrapper {
 	}
 	public void setContainsInnerChild(boolean containsInnerChild) {
 		this.containsInnerChild = containsInnerChild;
+	}
+	public StringBuilder getOriginalData() {
+		return originalData;
+	}
+	public void setOriginalData(StringBuilder originalData) {
+		this.originalData = originalData;
+	}
+	public boolean isSaxExceptionOccured() {
+		return saxExceptionOccured;
+	}
+	public void setSaxExceptionOccured(boolean saxExceptionOccured) {
+		this.saxExceptionOccured = saxExceptionOccured;
 	}
 	@Override
 	public String toString() {
