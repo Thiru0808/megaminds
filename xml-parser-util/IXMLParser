@@ -1,0 +1,9 @@
+package 
+
+import java.sql.Clob;
+
+public interface IXMLParser {
+	public XMLWrapper parseClob(Clob clobObj);
+	public StringBuilder clobToString(Clob data);
+	public Clob stringToClob(StringBuilder data);
+}
