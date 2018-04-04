@@ -1,0 +1,47 @@
+--Instalation--
+https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
+https://docs.mongodb.com/manual/reference/configuration-options/
+https://docs.mongodb.com/manual/core/databases-and-collections/
+https://docs.mongodb.com/getting-started/shell/
+https://docs.mongodb.com/manual/core/shell-types/
+
+C:\Program Files\MongoDB\Server\3.2\bin
+D:\mongo_db\data 
+D:\mongo_db\log\mongod.log
+D:\mongo_db\config\mongod.cfg
+
+CMD1
+----
+>mongod --version
+>mongod.exe --help
+>mongod.exe -f d:\mongo_db\config\mongod.cfg
+>mongod.exe --dbpath d:\mongo_db\data --logpath d:\mongo_db\log\mongod.log
+
+CMD2
+----
+>mongo.exe //>start mongo.exe - opens in new terminal//
+2018-03-29T11:33:15.079+0530 I CONTROL  [main] Hotfix KB2731284 or later update is not installed, will zero-out data files
+MongoDB shell version: 3.2.8-rc1-1-g7cc1cf4
+connecting to: test
+Welcome to the MongoDB shell.
+For interactive help, type "help".
+For more comprehensive documentation, see
+        http://docs.mongodb.org/
+Questions? Try the support group
+        http://groups.google.com/group/mongodb-user
+> db
+test
+>host = db.serverStatus().host;
+
+> prompt = function(){
+...return db+"@"+host+"$ ";
+...}
+
+> prompt = function() {
+...return "Uptime:"+db.serverStatus().uptime+" Documents:"+db.stats().objects+" > ";
+...}
+####################
+You can use your own editor in the mongo shell by setting the EDITOR environment variable before starting the mongo shell.
+export EDITOR=vim
+mongo
+####################
