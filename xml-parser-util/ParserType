@@ -1,0 +1,7 @@
+package
+
+public enum ParserType {
+	XML,
+	XML_NR,
+	TEXT;
+}
