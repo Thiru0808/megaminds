@@ -1,0 +1,116 @@
+package 
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.sql.Clob;
+import java.sql.SQLException;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
+
+import it.sella.util.Log4Debug;
+import it.sella.util.Log4DebugFactory;
+
+public class XMLNoRootParser implements IXMLParser {
+	private static final Log4Debug LOGGER = Log4DebugFactory.getLog4Debug(XMLNoRootParser.class);
+	private final static String ROOT_APPENDER = "params";
+
+	public XMLWrapper parseClob(Clob clobObj) {
+		LOGGER.debug("<<In XML_NRParser - parseXML(CLOB)>>");
+		XMLWrapper parsedXML = new XMLWrapper();
+		Reader reader = null;
+		try {
+			Clob updatedClob = appendClob(clobObj, ROOT_APPENDER);
+			reader = updatedClob.getCharacterStream();
+			InputSource is = new InputSource(reader);
+			XMLReader xr = XMLReaderFactory.createXMLReader();
+			XMLReaderUtil xmlReaderUtil = new XMLReaderUtil();
+			xr.setContentHandler(xmlReaderUtil);
+			xr.parse(is);
+			parsedXML = xmlReaderUtil.getXMLWrapper();
+		} catch (SQLException e) {
+			LOGGER.debug("SQLException - ", e.getMessage());
+			LOGGER.debugStackTrace(e);
+		} catch (IOException e) {
+			LOGGER.debug("IOException - ", e.getMessage());
+			LOGGER.debugStackTrace(e);
+		} catch (SAXException e) {
+			LOGGER.debug("SAXException - ", e.getMessage());
+			LOGGER.debugStackTrace(e);
+			parsedXML.setSaxExceptionOccured(true);
+			parsedXML.setOriginalData(clobToString(clobObj));
+		} catch (RuntimeException e) {
+			LOGGER.debug("RuntimeException - ", e.getMessage());
+			LOGGER.debugStackTrace(e);
+		} finally {
+			try {
+				reader.close();
+			} catch (IOException e) {
+				LOGGER.debug("IOException - ", e.getMessage());
+				LOGGER.debugStackTrace(e);
+			}
+		}
+		return parsedXML;
+	}
+
+	public Clob appendClob(Clob data, String rootElement) {
+		LOGGER.debug("<<In XML_NRParser - appendClob>>");
+		final StringBuilder sb = new StringBuilder();
+		Clob updatedClob = null;
+		sb.append("<" + rootElement + ">");
+		sb.append(clobToString(data));
+		sb.append("</" + rootElement + ">");
+		updatedClob = stringToClob(sb);
+		if (updatedClob == null) {
+			updatedClob = data;
+		}
+		return updatedClob;
+	}
+
+	public StringBuilder clobToString(Clob data) {
+		LOGGER.debug("<<In XML_NRParser - clobToString>>");
+		final StringBuilder sb = new StringBuilder();
+		Reader reader = null;
+		BufferedReader br = null;
+		try {
+			reader = data.getCharacterStream();
+			br = new BufferedReader(reader);
+			int b;
+			while (-1 != (b = br.read())) {
+				sb.append((char) b);
+			}
+			br.close();
+		} catch (SQLException e) {
+			LOGGER.debug("SQLException - ", e.getMessage());
+			LOGGER.debugStackTrace(e);
+		} catch (IOException e) {
+			LOGGER.debug("IOException - ", e.getMessage());
+			LOGGER.debugStackTrace(e);
+		} finally {
+			try {
+				reader.close();
+				br.close();
+			} catch (IOException e) {
+				LOGGER.debug("IOException - ", e.getMessage());
+				LOGGER.debugStackTrace(e);
+			}
+		}
+		return sb;
+	}
+
+	public Clob stringToClob(StringBuilder data) {
+		LOGGER.debug("<<In XML_NRParser - stringToClob>>");
+		Clob updatedClob = null;
+		try {
+			updatedClob = new javax.sql.rowset.serial.SerialClob(data.toString().toCharArray());
+			LOGGER.debug("Updated the sb to clob");
+		} catch (SQLException e) {
+			LOGGER.debug("SQLException - ", e.getMessage());
+			LOGGER.debugStackTrace(e);
+		}
+		return updatedClob;
+	}
+}
