@@ -11,8 +11,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import it.sella.util.Log4Debug;
-import it.sella.util.Log4DebugFactory;
 
 public class XMLNoRootParser implements IXMLParser {
 	private static final Log4Debug LOGGER = Log4DebugFactory.getLog4Debug(XMLNoRootParser.class);
