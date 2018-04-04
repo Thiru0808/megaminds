@@ -1,0 +1,41 @@
+package 
+public class XMLParserProvider {
+	private static final Log4Debug LOGGER = Log4DebugFactory.getLog4Debug(XMLParserProvider.class);
+	private static XMLParserProvider instance = null;
+
+	public static XMLParserProvider getInstance() {
+		if (instance == null) {
+			synchronized (XMLParserProvider.class) {
+				if (instance == null) {
+					instance = new XMLParserProvider();
+				}
+			}
+		}
+		return instance;
+	}
+
+	public IXMLParser getClobParser(final String parserType) {
+		LOGGER.debug("<XMLParserProvider getClobParser for type- > ", parserType);
+		IXMLParser clobparser = null;
+		try {
+			ParserType types = ParserType.valueOf(parserType);
+			switch (types) {
+			case XML:
+				clobparser = new XMLParser();
+				break;
+			case XML_NR:
+				clobparser = new XMLNoRootParser();
+				break;
+			case TEXT:
+				clobparser = new TextParser();
+				break;
+			default:
+				clobparser = new TextParser();
+			}
+
+		} catch (IllegalArgumentException e) {
+			clobparser = new TextParser();
+		}
+		return clobparser;
+	}
+}
