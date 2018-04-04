@@ -4,10 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.sql.Clob;
-import java.sql.SQLException;
-
-import it.sella.util.Log4Debug;
-import it.sella.util.Log4DebugFactory;
+import java.sql.SQLException
 
 public class TextParser implements IXMLParser {
 	private static final Log4Debug LOGGER = Log4DebugFactory.getLog4Debug(TextParser.class);
