@@ -6,6 +6,19 @@ https://github.com/generalgmt/express-server
 
 https://github.com/generalgmt/RESTfulAPITutorial
 
+https://developers.google.com/machine-learning/crash-course/prereqs-and-prework
+
+https://colab.research.google.com/notebooks/mlcc/intro_to_pandas.ipynb?hl=en#scrollTo=aSRYu62xUi3g
+
+Steps to run Node,
+
+1. Install Node (just download Node zip and extract and add env and path variable in windows)
+2. Check the node version once the step is done by node -v to verify the install done sucessfully
+3. npm install -g create-react-app (to craete the global react dirstructure for your app)
+4. create-react-app <your-app-name>
+5. cd my-app
+6. npm start
+
 D:\Node_LRNGS>mkdir track-me-backend
 
 D:\Node_LRNGS>cd track-me-backend
